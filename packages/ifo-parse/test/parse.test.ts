@@ -4,6 +4,7 @@ import { classifyTitles, isMenuTitle, isEpisodeDisc, mainFeature, episodes, extr
 import movieFixture from "./fixtures/movie.json"
 import tvSeasonFixture from "./fixtures/tv_season.json"
 import realMovieFixture from "./fixtures/real_movie.json"
+import tvShowRawFixture from "./fixtures/tv_show_raw.json"
 
 describe("parse", () => {
   test("parses movie disc fixture", () => {
@@ -122,5 +123,34 @@ describe("classify", () => {
     
     // Classification confidence should be "ifo" for type 1
     expect(feature?.classificationConfidence).toBe("ifo")
+  })
+
+  test("parses and classifies real TV show disc", () => {
+    const disc = parseShimOutput(JSON.stringify(tvShowRawFixture), "/dev/sr0")
+    const classified = classifyTitles(disc)
+    
+    expect(classified.titles.length).toBe(83)
+    
+    // Should be detected as episode disc
+    expect(isEpisodeDisc(classified)).toBe(true)
+    
+    // No main feature
+    const feature = mainFeature(classified)
+    expect(feature).toBeUndefined()
+    
+    // Many episodes
+    const eps = episodes(classified)
+    expect(eps.length).toBe(82)
+    
+    // Episodes should be ~82 minutes each (~4900 seconds)
+    const typicalEpisodes = eps.filter(e => e.length > 4000 && e.length < 6000)
+    expect(typicalEpisodes.length).toBeGreaterThan(50)
+    
+    // All sequential titles should be classified as episodes
+    const sequentialTitles = classified.titles.filter(t => t.ifoTitleType === 1)
+    for (const title of sequentialTitles) {
+      expect(title.classification).toBe("episode")
+      expect(title.classificationConfidence).toBe("ifo")
+    }
   })
 })
