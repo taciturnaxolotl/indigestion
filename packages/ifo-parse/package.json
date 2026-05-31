@@ -1,0 +1,18 @@
+{
+  "name": "ifo-parse",
+  "version": "0.1.0",
+  "description": "Parse DVD IFO files via libdvdread FFI",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "bun build src/index.ts --outdir dist --target bun",
+    "build:shim": "bash shim/build.sh",
+    "test": "bun test"
+  },
+  "keywords": ["dvd", "ifo", "libdvdread"],
+  "author": "Kieran Klukas",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/bun": "^1.1.0"
+  }
+}

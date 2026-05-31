@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+*.tsbuildinfo
+
+# Local prebuilds (committed binaries live in prebuilds/)
+prebuilds/**/*.dylib
+prebuilds/**/*.so
+prebuilds/**/*.dll
+
+# Logs
+*.log
+
+# OS
+.DS_Store

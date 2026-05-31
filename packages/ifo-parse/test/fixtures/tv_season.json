@@ -1,0 +1,119 @@
+{
+  "discTitle": "FRIENDS_SEASON_1",
+  "titles": [
+    {
+      "ix": 1,
+      "vtsIx": 1,
+      "pgcIx": 1,
+      "ifoTitleType": 1,
+      "angleCount": 1,
+      "length": 1320.0,
+      "chapters": [
+        {"ix": 1, "startTime": 0.0},
+        {"ix": 2, "startTime": 300.0}
+      ],
+      "video": {
+        "type": "video",
+        "format": "MPEG2",
+        "width": 720,
+        "height": 480,
+        "fps": 29.97,
+        "aspectRatio": "4:3"
+      },
+      "audio": [
+        {
+          "type": "audio",
+          "ix": 0,
+          "langCode": "en",
+          "language": "English",
+          "format": "AC3",
+          "channels": 2,
+          "sampleRate": 48000,
+          "quantization": 16
+        }
+      ],
+      "subtitles": [
+        {
+          "type": "subtitle",
+          "ix": 0,
+          "langCode": "en",
+          "language": "English",
+          "format": "VobSub"
+        }
+      ]
+    },
+    {
+      "ix": 2,
+      "vtsIx": 1,
+      "pgcIx": 2,
+      "ifoTitleType": 1,
+      "angleCount": 1,
+      "length": 1280.0,
+      "chapters": [
+        {"ix": 1, "startTime": 0.0},
+        {"ix": 2, "startTime": 280.0}
+      ],
+      "video": {
+        "type": "video",
+        "format": "MPEG2",
+        "width": 720,
+        "height": 480,
+        "fps": 29.97,
+        "aspectRatio": "4:3"
+      },
+      "audio": [
+        {
+          "type": "audio",
+          "ix": 0,
+          "langCode": "en",
+          "language": "English",
+          "format": "AC3",
+          "channels": 2,
+          "sampleRate": 48000,
+          "quantization": 16
+        }
+      ],
+      "subtitles": [
+        {
+          "type": "subtitle",
+          "ix": 0,
+          "langCode": "en",
+          "language": "English",
+          "format": "VobSub"
+        }
+      ]
+    },
+    {
+      "ix": 3,
+      "vtsIx": 1,
+      "pgcIx": 3,
+      "ifoTitleType": 1,
+      "angleCount": 1,
+      "length": 1350.0,
+      "chapters": [
+        {"ix": 1, "startTime": 0.0}
+      ],
+      "video": {
+        "type": "video",
+        "format": "MPEG2",
+        "width": 720,
+        "height": 480,
+        "fps": 29.97,
+        "aspectRatio": "4:3"
+      },
+      "audio": [
+        {
+          "type": "audio",
+          "ix": 0,
+          "langCode": "en",
+          "language": "English",
+          "format": "AC3",
+          "channels": 2,
+          "sampleRate": 48000,
+          "quantization": 16
+        }
+      ],
+      "subtitles": []
+    }
+  ]
+}

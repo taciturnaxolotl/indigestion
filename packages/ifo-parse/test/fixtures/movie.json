@@ -1,0 +1,98 @@
+{
+  "discTitle": "THE_MATRIX",
+  "titles": [
+    {
+      "ix": 1,
+      "vtsIx": 1,
+      "pgcIx": 1,
+      "ifoTitleType": 1,
+      "angleCount": 1,
+      "length": 8160.5,
+      "chapters": [
+        {"ix": 1, "startTime": 0.0},
+        {"ix": 2, "startTime": 300.5},
+        {"ix": 3, "startTime": 600.2},
+        {"ix": 4, "startTime": 900.8},
+        {"ix": 5, "startTime": 1200.3}
+      ],
+      "video": {
+        "type": "video",
+        "format": "MPEG2",
+        "width": 720,
+        "height": 480,
+        "fps": 29.97,
+        "aspectRatio": "16:9"
+      },
+      "audio": [
+        {
+          "type": "audio",
+          "ix": 0,
+          "langCode": "en",
+          "language": "English",
+          "format": "AC3",
+          "channels": 6,
+          "sampleRate": 48000,
+          "quantization": 16
+        },
+        {
+          "type": "audio",
+          "ix": 1,
+          "langCode": "fr",
+          "language": "French",
+          "format": "AC3",
+          "channels": 2,
+          "sampleRate": 48000,
+          "quantization": 16
+        }
+      ],
+      "subtitles": [
+        {
+          "type": "subtitle",
+          "ix": 0,
+          "langCode": "en",
+          "language": "English",
+          "format": "VobSub"
+        },
+        {
+          "type": "subtitle",
+          "ix": 1,
+          "langCode": "es",
+          "language": "Spanish",
+          "format": "VobSub"
+        }
+      ]
+    },
+    {
+      "ix": 2,
+      "vtsIx": 2,
+      "pgcIx": 1,
+      "ifoTitleType": 2,
+      "angleCount": 1,
+      "length": 600.0,
+      "chapters": [
+        {"ix": 1, "startTime": 0.0}
+      ],
+      "video": {
+        "type": "video",
+        "format": "MPEG2",
+        "width": 720,
+        "height": 480,
+        "fps": 29.97,
+        "aspectRatio": "4:3"
+      },
+      "audio": [
+        {
+          "type": "audio",
+          "ix": 0,
+          "langCode": "en",
+          "language": "English",
+          "format": "AC3",
+          "channels": 2,
+          "sampleRate": 48000,
+          "quantization": 16
+        }
+      ],
+      "subtitles": []
+    }
+  ]
+}
