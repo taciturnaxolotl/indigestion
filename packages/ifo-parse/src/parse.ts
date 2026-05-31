@@ -13,6 +13,13 @@ export function parseShimOutput(json: string, source: string): DiscInfo {
   return {
     source,
     discTitle: raw.discTitle,
+    providerId: raw.providerId,
+    nrOfVolumes: raw.nrOfVolumes,
+    thisVolumeNr: raw.thisVolumeNr,
+    discSide: raw.discSide,
+    nrOfTitleSets: raw.nrOfTitleSets,
+    regionCode: raw.regionCode,
+    parentalRatings: raw.parentalRatings,
     titles,
   }
 }

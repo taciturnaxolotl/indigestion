@@ -32,7 +32,109 @@ char *ifo_parse_disc(const char *path) {
   }
 
   cJSON *root = cJSON_CreateObject();
-  cJSON_AddStringToObject(root, "discTitle", vmg->vts_atrt ? "DVD" : "Unknown");
+  
+  // Disc-level metadata
+  char disc_title[13] = {0};
+  if (vmg->txtdt_mgi) {
+    strncpy(disc_title, vmg->txtdt_mgi->disc_name, 12);
+    disc_title[12] = '\0';
+  }
+  if (strlen(disc_title) == 0 && vmg->vmgi_mat) {
+    strncpy(disc_title, vmg->vmgi_mat->provider_identifier, 12);
+    disc_title[12] = '\0';
+  }
+  if (strlen(disc_title) == 0) {
+    strcpy(disc_title, "DVD");
+  }
+  cJSON_AddStringToObject(root, "discTitle", disc_title);
+  
+  if (vmg->vmgi_mat) {
+    char provider[33] = {0};
+    strncpy(provider, vmg->vmgi_mat->provider_identifier, 32);
+    provider[32] = '\0';
+    cJSON_AddStringToObject(root, "providerId", provider);
+    
+    cJSON_AddNumberToObject(root, "nrOfVolumes", vmg->vmgi_mat->vmg_nr_of_volumes);
+    cJSON_AddNumberToObject(root, "thisVolumeNr", vmg->vmgi_mat->vmg_this_volume_nr);
+    cJSON_AddNumberToObject(root, "discSide", vmg->vmgi_mat->disc_side);
+    cJSON_AddNumberToObject(root, "nrOfTitleSets", vmg->vmgi_mat->vmg_nr_of_title_sets);
+    
+    // Region code (bits in vmg_category)
+    uint32_t region_mask = (vmg->vmgi_mat->vmg_category >> 16) & 0xFF;
+    cJSON_AddNumberToObject(root, "regionCode", region_mask);
+  }
+  
+  // Parental management
+  if (vmg->ptl_mait && vmg->ptl_mait->nr_of_countries > 0) {
+    cJSON *parental = cJSON_AddArrayToObject(root, "parentalRatings");
+    for (int c = 0; c < vmg->ptl_mait->nr_of_countries; c++) {
+      ptl_mait_country_t *country = &vmg->ptl_mait->countries[c];
+      cJSON *cobj = cJSON_CreateObject();
+      
+      char cc[3] = {0};
+      safe_lang(cc, country->country_code);
+      cJSON_AddStringToObject(cobj, "country", cc);
+      
+      // Get parental level for video_ts (first entry)
+      if (country->pf_ptl_mai) {
+        uint16_t level = country->pf_ptl_mai[0][0];
+        cJSON_AddNumberToObject(cobj, "level", level);
+      }
+      
+      cJSON_AddItemToArray(parental, cobj);
+    }
+  }
+  
+  // Text data manager - extract full titles
+  if (vmg->txtdt_mgi && vmg->txtdt_mgi->nr_of_language_units > 0) {
+    cJSON *textData = cJSON_AddObjectToObject(root, "textData");
+    
+    // Disc name from text data (already used above, but include here for completeness)
+    char disc_name[13] = {0};
+    strncpy(disc_name, vmg->txtdt_mgi->disc_name, 12);
+    disc_name[12] = '\0';
+    cJSON_AddStringToObject(textData, "discName", disc_name);
+    
+    // Language units with title strings
+    cJSON *langUnits = cJSON_AddArrayToObject(textData, "languageUnits");
+    for (int lu = 0; lu < vmg->txtdt_mgi->nr_of_language_units; lu++) {
+      txtdt_lu_t *lu_ptr = &vmg->txtdt_mgi->lu[lu];
+      cJSON *luobj = cJSON_CreateObject();
+      
+      char lang[3] = {0};
+      safe_lang(lang, lu_ptr->lang_code);
+      cJSON_AddStringToObject(luobj, "language", lang);
+      cJSON_AddNumberToObject(luobj, "charSet", lu_ptr->char_set);
+      
+      // Extract text strings if available
+      if (lu_ptr->txtdt) {
+        cJSON *texts = cJSON_AddArrayToObject(luobj, "texts");
+        
+        // First offset is disc title, rest are VTS titles
+        int nr_texts = lu_ptr->txtdt->offsets[0]; // number of entries
+        if (nr_texts > 100) nr_texts = 100; // safety limit
+        
+        for (int t = 0; t < nr_texts; t++) {
+          uint16_t offset = lu_ptr->txtdt->offsets[t];
+          if (offset == 0) continue;
+          
+          // The actual text parsing is complex and depends on char_set
+          // For now, just note that text data exists at this offset
+          cJSON *tobj = cJSON_CreateObject();
+          cJSON_AddNumberToObject(tobj, "index", t);
+          cJSON_AddNumberToObject(tobj, "offset", offset);
+          
+          // Try to read raw bytes (may not be valid UTF-8)
+          // Text format varies by charset - skip actual decoding for now
+          cJSON_AddStringToObject(tobj, "note", "Text data present but not decoded");
+          
+          cJSON_AddItemToArray(texts, tobj);
+        }
+      }
+      
+      cJSON_AddItemToArray(langUnits, luobj);
+    }
+  }
 
   tt_srpt_t *tt_srpt = vmg->tt_srpt;
   if (!tt_srpt) {
@@ -72,6 +174,31 @@ char *ifo_parse_disc(const char *path) {
                         (double)pgc->playback_time.minute * 60.0 +
                         (double)pgc->playback_time.second;
       cJSON_AddNumberToObject(tobj, "length", duration);
+      
+      // PGC navigation
+      cJSON_AddNumberToObject(tobj, "nextPgc", pgc->next_pgc_nr);
+      cJSON_AddNumberToObject(tobj, "prevPgc", pgc->prev_pgc_nr);
+      cJSON_AddNumberToObject(tobj, "goupPgc", pgc->goup_pgc_nr);
+      cJSON_AddNumberToObject(tobj, "stillTime", pgc->still_time);
+      
+      // Prohibited operations
+      cJSON *prohibited = cJSON_CreateObject();
+      cJSON_AddBoolToObject(prohibited, "stop", pgc->prohibited_ops.stop);
+      cJSON_AddBoolToObject(prohibited, "pauseOn", pgc->prohibited_ops.pause_on);
+      cJSON_AddBoolToObject(prohibited, "titlePlay", pgc->prohibited_ops.title_play);
+      cJSON_AddBoolToObject(prohibited, "chapterSearch", pgc->prohibited_ops.chapter_search_or_play);
+      cJSON_AddBoolToObject(prohibited, "timeSearch", pgc->prohibited_ops.time_or_chapter_search);
+      cJSON_AddBoolToObject(prohibited, "forwardScan", pgc->prohibited_ops.forward_scan);
+      cJSON_AddBoolToObject(prohibited, "backwardScan", pgc->prohibited_ops.backward_scan);
+      cJSON_AddBoolToObject(prohibited, "nextPgSearch", pgc->prohibited_ops.next_pg_search);
+      cJSON_AddBoolToObject(prohibited, "prevPgSearch", pgc->prohibited_ops.prev_or_top_pg_search);
+      cJSON_AddBoolToObject(prohibited, "rootMenuCall", pgc->prohibited_ops.root_menu_call);
+      cJSON_AddBoolToObject(prohibited, "titleMenuCall", pgc->prohibited_ops.title_menu_call);
+      cJSON_AddBoolToObject(prohibited, "chapterMenuCall", pgc->prohibited_ops.chapter_menu_call);
+      cJSON_AddBoolToObject(prohibited, "audioChange", pgc->prohibited_ops.audio_stream_change);
+      cJSON_AddBoolToObject(prohibited, "subpicChange", pgc->prohibited_ops.subpic_stream_change);
+      cJSON_AddBoolToObject(prohibited, "angleChange", pgc->prohibited_ops.angle_change);
+      cJSON_AddItemToObject(tobj, "prohibitedOps", prohibited);
 
       cJSON *chapters = cJSON_AddArrayToObject(tobj, "chapters");
       if (pgc->program_map) {
@@ -91,9 +218,34 @@ char *ifo_parse_disc(const char *path) {
           cJSON_AddItemToArray(chapters, chap);
         }
       }
+      
+      // Cell-level details
+      cJSON *cells = cJSON_AddArrayToObject(tobj, "cells");
+      if (pgc->cell_playback) {
+        for (int c = 0; c < pgc->nr_of_cells; c++) {
+          cell_playback_t *cp = &pgc->cell_playback[c];
+          cJSON *cellobj = cJSON_CreateObject();
+          cJSON_AddNumberToObject(cellobj, "ix", c + 1);
+          
+          double cell_duration = (double)cp->playback_time.hour * 3600.0 +
+                                (double)cp->playback_time.minute * 60.0 +
+                                (double)cp->playback_time.second;
+          cJSON_AddNumberToObject(cellobj, "duration", cell_duration);
+          
+          cJSON_AddNumberToObject(cellobj, "startSector", cp->first_sector);
+          cJSON_AddNumberToObject(cellobj, "endSector", cp->last_sector);
+          cJSON_AddNumberToObject(cellobj, "blockMode", cp->block_mode);
+          cJSON_AddNumberToObject(cellobj, "blockType", cp->block_type);
+          cJSON_AddNumberToObject(cellobj, "seamlessAngle", cp->seamless_angle);
+          cJSON_AddNumberToObject(cellobj, "stillTime", cp->still_time);
+          
+          cJSON_AddItemToArray(cells, cellobj);
+        }
+      }
     } else {
       cJSON_AddNumberToObject(tobj, "length", 0.0);
       cJSON_AddArrayToObject(tobj, "chapters");
+      cJSON_AddArrayToObject(tobj, "cells");
     }
 
     // Video

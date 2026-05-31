@@ -5,6 +5,8 @@ import movieFixture from "./fixtures/movie.json"
 import tvSeasonFixture from "./fixtures/tv_season.json"
 import realMovieFixture from "./fixtures/real_movie.json"
 import tvShowRawFixture from "./fixtures/tv_show_raw.json"
+import tvShowFullFixture from "./fixtures/tv_show_full.json"
+import movieFullFixture from "./fixtures/movie_full.json"
 
 describe("parse", () => {
   test("parses movie disc fixture", () => {
@@ -151,6 +153,92 @@ describe("classify", () => {
     for (const title of sequentialTitles) {
       expect(title.classification).toBe("episode")
       expect(title.classificationConfidence).toBe("ifo")
+    }
+  })
+
+  test("extracts full metadata from TV show disc", () => {
+    const disc = parseShimOutput(JSON.stringify(tvShowFullFixture), "/dev/sr0")
+    
+    // Disc-level metadata
+    expect(disc.nrOfVolumes).toBe(1)
+    expect(disc.thisVolumeNr).toBe(1)
+    expect(disc.discSide).toBe(1)
+    expect(disc.nrOfTitleSets).toBe(21)
+    expect(disc.regionCode).toBeDefined()
+    
+    // Title-level metadata
+    const title1 = disc.titles[0]
+    expect(title1.nextPgc).toBeDefined()
+    expect(title1.prevPgc).toBeDefined()
+    expect(title1.goupPgc).toBeDefined()
+    expect(title1.stillTime).toBeDefined()
+    
+    // Prohibited operations
+    expect(title1.prohibitedOps).toBeDefined()
+    expect(typeof title1.prohibitedOps.stop).toBe("boolean")
+    expect(typeof title1.prohibitedOps.pauseOn).toBe("boolean")
+    expect(typeof title1.prohibitedOps.audioChange).toBe("boolean")
+    
+    // Cell-level details
+    expect(title1.cells).toBeDefined()
+    expect(title1.cells.length).toBeGreaterThan(0)
+    
+    const cell1 = title1.cells[0]
+    expect(cell1.ix).toBe(1)
+    expect(cell1.duration).toBeDefined()
+    expect(cell1.startSector).toBeDefined()
+    expect(cell1.endSector).toBeDefined()
+    expect(cell1.blockMode).toBeDefined()
+    expect(cell1.seamlessAngle).toBeDefined()
+    expect(cell1.stillTime).toBeDefined()
+    
+    // Verify cells have reasonable sector ranges
+    for (const cell of title1.cells) {
+      expect(cell.endSector).toBeGreaterThanOrEqual(cell.startSector)
+    }
+  })
+
+  test("extracts full metadata from movie disc", () => {
+    const disc = parseShimOutput(JSON.stringify(movieFullFixture), "/dev/sr0")
+    
+    // Disc-level metadata
+    expect(disc.discTitle).toBe("WARNER_HOME_")
+    expect(disc.providerId).toBe("WARNER_HOME_VIDEO")
+    expect(disc.nrOfVolumes).toBe(1)
+    expect(disc.thisVolumeNr).toBe(1)
+    expect(disc.discSide).toBe(1)
+    expect(disc.nrOfTitleSets).toBe(3)
+    expect(disc.regionCode).toBe(246) // Region 1, 3, 4
+    
+    const classified = classifyTitles(disc)
+    
+    // Should have main feature
+    const feature = mainFeature(classified)
+    expect(feature).toBeDefined()
+    expect(feature?.ix).toBe(1)
+    expect(feature?.length).toBe(11107) // ~3 hours
+    
+    // Check full metadata on main feature
+    expect(feature?.nextPgc).toBe(0)
+    expect(feature?.prevPgc).toBe(0)
+    expect(feature?.goupPgc).toBe(0)
+    expect(feature?.stillTime).toBe(0)
+    
+    // Prohibited ops should all be false for a movie
+    expect(feature?.prohibitedOps.stop).toBe(false)
+    expect(feature?.prohibitedOps.pauseOn).toBe(false)
+    expect(feature?.prohibitedOps.titlePlay).toBe(false)
+    expect(feature?.prohibitedOps.audioChange).toBe(false)
+    expect(feature?.prohibitedOps.subpicChange).toBe(false)
+    
+    // Cells should exist and have valid data
+    expect(feature?.cells).toBeDefined()
+    expect(feature?.cells.length).toBeGreaterThan(0)
+    
+    for (const cell of feature!.cells) {
+      expect(cell.endSector).toBeGreaterThanOrEqual(cell.startSector)
+      expect(cell.blockMode).toBeGreaterThanOrEqual(0)
+      expect(cell.blockMode).toBeLessThanOrEqual(3)
     }
   })
 })
