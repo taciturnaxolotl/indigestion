@@ -1,30 +1,22 @@
 import { dlopen, CString, ptr } from "bun:ffi"
 import path from "path"
+import platforms from "../platforms.json"
+
+// Platform detection logic must match shim/build.sh
+// When adding a new platform, update both this file and shim/build.sh
 
 // Resolve the shim library path based on platform
 function getShimPath(): string {
   const platform = process.platform
   const arch = process.arch
-
-  let dir: string
-  if (platform === "darwin") {
-    if (arch === "arm64") {
-      dir = "darwin-arm64"
-    } else {
-      dir = "darwin-x64"
-    }
-  } else if (platform === "linux") {
-    if (arch === "arm64" || arch === "aarch64") {
-      dir = "linux-arm64"
-    } else {
-      dir = "linux-x64"
-    }
-  } else {
+  const key = `${platform}-${arch}` as keyof typeof platforms
+  
+  const config = platforms[key]
+  if (!config) {
     throw new Error(`Unsupported platform: ${platform} ${arch}`)
   }
 
-  const ext = platform === "darwin" ? ".dylib" : ".so"
-  return path.join(__dirname, "..", "prebuilds", dir, `ifo_shim${ext}`)
+  return path.join(__dirname, "..", "prebuilds", config.dir, `ifo_shim${config.ext}`)
 }
 
 const shimPath = getShimPath()

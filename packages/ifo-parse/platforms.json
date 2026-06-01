@@ -1,0 +1,18 @@
+{
+  "darwin-arm64": {
+    "dir": "darwin-arm64",
+    "ext": ".dylib"
+  },
+  "darwin-x64": {
+    "dir": "darwin-x64",
+    "ext": ".dylib"
+  },
+  "linux-arm64": {
+    "dir": "linux-arm64",
+    "ext": ".so"
+  },
+  "linux-x64": {
+    "dir": "linux-x64",
+    "ext": ".so"
+  }
+}

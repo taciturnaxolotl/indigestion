@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# Platform detection logic must match platforms.json
+# When adding a new platform, update both this file and platforms.json
+
 # Detect platform
 PLATFORM=$(uname -s)
 ARCH=$(uname -m)

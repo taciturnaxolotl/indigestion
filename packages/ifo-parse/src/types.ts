@@ -2,7 +2,7 @@ export type StreamType = "video" | "audio" | "subtitle"
 
 export interface VideoStream {
   type: "video"
-  format: string          // "MPEG2" | "MPEG4" | "H264"
+  format: string          // "MPEG1" | "MPEG2"
   width: number
   height: number
   fps: number             // 25 | 29.97
@@ -18,7 +18,6 @@ export interface AudioStream {
   type: "audio"
   ix: number              // 0-based stream index
   langCode: string        // ISO 639-1, e.g. "en"
-  language: string        // "English"
   format: string          // "AC3" | "DTS" | "LPCM" | "MPEG"
   channels: number        // 2 | 6 | 8
   sampleRate: number      // Hz, typically 48000
@@ -34,7 +33,6 @@ export interface SubtitleStream {
   type: "subtitle"
   ix: number
   langCode: string
-  language: string
   format: string          // "VobSub"
   codeMode?: number       // 0=run-length, 1=extended, 2=other
   subpType?: number       // 0=not specified, 1=language, 2=other
@@ -103,10 +101,6 @@ export type TitleType =
   | "main_feature"
   | "episode"
   | "featurette"
-  | "behind_the_scenes"
-  | "deleted_scenes"
-  | "interview"
-  | "trailer"
   | "menu"
   | "unknown"
 

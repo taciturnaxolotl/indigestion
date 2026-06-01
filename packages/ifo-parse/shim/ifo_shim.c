@@ -5,6 +5,13 @@
 #include <dvdread/dvd_reader.h>
 #include "cJSON.h"
 
+// Convert playback_time_t to seconds
+static double playback_time_to_seconds(playback_time_t t) {
+  return (double)t.hour * 3600.0 +
+         (double)t.minute * 60.0 +
+         (double)t.second;
+}
+
 // Safely extract language code (2 lowercase letters or "un")
 static void safe_lang(char *out, uint16_t lang_code) {
   out[0] = 'u';
@@ -172,9 +179,7 @@ char *ifo_parse_disc(const char *path) {
     if (pgcit && pgc_ix > 0 && pgc_ix <= pgcit->nr_of_pgci_srp) {
       pgc_t *pgc = pgcit->pgci_srp[pgc_ix - 1].pgc;
 
-      double duration = (double)pgc->playback_time.hour * 3600.0 +
-                        (double)pgc->playback_time.minute * 60.0 +
-                        (double)pgc->playback_time.second;
+      double duration = playback_time_to_seconds(pgc->playback_time);
       cJSON_AddNumberToObject(tobj, "length", duration);
       
       // PGC navigation
@@ -212,9 +217,7 @@ char *ifo_parse_disc(const char *path) {
           int start_cell = pgc->program_map[c];
           for (int cell = 0; cell < start_cell - 1 && cell < pgc->nr_of_cells; cell++) {
             cell_playback_t *cp = &pgc->cell_playback[cell];
-            start_time += (double)cp->playback_time.hour * 3600.0 +
-                          (double)cp->playback_time.minute * 60.0 +
-                          (double)cp->playback_time.second;
+            start_time += playback_time_to_seconds(cp->playback_time);
           }
           cJSON_AddNumberToObject(chap, "startTime", start_time);
           cJSON_AddItemToArray(chapters, chap);
@@ -229,9 +232,7 @@ char *ifo_parse_disc(const char *path) {
           cJSON *cellobj = cJSON_CreateObject();
           cJSON_AddNumberToObject(cellobj, "ix", c + 1);
           
-          double cell_duration = (double)cp->playback_time.hour * 3600.0 +
-                                (double)cp->playback_time.minute * 60.0 +
-                                (double)cp->playback_time.second;
+          double cell_duration = playback_time_to_seconds(cp->playback_time);
           cJSON_AddNumberToObject(cellobj, "duration", cell_duration);
           
           cJSON_AddNumberToObject(cellobj, "startSector", cp->first_sector);
@@ -299,6 +300,7 @@ char *ifo_parse_disc(const char *path) {
     cJSON *audio_array = cJSON_AddArrayToObject(tobj, "audio");
     if (vts->vtsi_mat) {
       int n_audio = vts->vtsi_mat->nr_of_vts_audio_streams;
+      if (n_audio > 8) n_audio = 8; // DVD spec limit
       for (int a = 0; a < n_audio; a++) {
         audio_attr_t *aattr = &vts->vtsi_mat->vts_audio_attr[a];
         
@@ -319,7 +321,6 @@ char *ifo_parse_disc(const char *path) {
         cJSON_AddStringToObject(aobj, "type", "audio");
         cJSON_AddNumberToObject(aobj, "ix", a);
         cJSON_AddStringToObject(aobj, "langCode", lang);
-        cJSON_AddStringToObject(aobj, "language", lang);
         cJSON_AddStringToObject(aobj, "format", fmt);
         cJSON_AddNumberToObject(aobj, "channels", aattr->channels + 1);
         cJSON_AddNumberToObject(aobj, "sampleRate", sample_rate);
@@ -337,6 +338,7 @@ char *ifo_parse_disc(const char *path) {
     cJSON *sub_array = cJSON_AddArrayToObject(tobj, "subtitles");
     if (vts->vtsi_mat) {
       int n_sub = vts->vtsi_mat->nr_of_vts_subp_streams;
+      if (n_sub > 32) n_sub = 32; // DVD spec limit
       for (int s = 0; s < n_sub; s++) {
         subp_attr_t *sattr = &vts->vtsi_mat->vts_subp_attr[s];
         
@@ -347,7 +349,6 @@ char *ifo_parse_disc(const char *path) {
         cJSON_AddStringToObject(sobj, "type", "subtitle");
         cJSON_AddNumberToObject(sobj, "ix", s);
         cJSON_AddStringToObject(sobj, "langCode", lang);
-        cJSON_AddStringToObject(sobj, "language", lang);
         cJSON_AddStringToObject(sobj, "format", "VobSub");
         cJSON_AddNumberToObject(sobj, "codeMode", sattr->code_mode);
         cJSON_AddNumberToObject(sobj, "subpType", sattr->type);
