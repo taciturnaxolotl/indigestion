@@ -164,6 +164,8 @@ char *ifo_parse_disc(const char *path) {
     int title_type = title->pb_ty.multi_or_random_pgc_title ? 2 : 1;
     cJSON_AddNumberToObject(tobj, "ifoTitleType", title_type);
     cJSON_AddNumberToObject(tobj, "angleCount", title->nr_of_angles);
+    cJSON_AddNumberToObject(tobj, "parentalId", title->parental_id);
+    cJSON_AddNumberToObject(tobj, "nrOfPttSearchPointers", title->nr_of_ptts);
 
     // Duration and chapters
     pgcit_t *pgcit = vts->vts_pgcit;
@@ -238,6 +240,15 @@ char *ifo_parse_disc(const char *path) {
           cJSON_AddNumberToObject(cellobj, "blockType", cp->block_type);
           cJSON_AddNumberToObject(cellobj, "seamlessAngle", cp->seamless_angle);
           cJSON_AddNumberToObject(cellobj, "stillTime", cp->still_time);
+          cJSON_AddBoolToObject(cellobj, "seamlessPlay", cp->seamless_play);
+          cJSON_AddBoolToObject(cellobj, "interleaved", cp->interleaved);
+          cJSON_AddBoolToObject(cellobj, "stcDiscontinuity", cp->stc_discontinuity);
+          cJSON_AddBoolToObject(cellobj, "playbackMode", cp->playback_mode);
+          cJSON_AddBoolToObject(cellobj, "restricted", cp->restricted);
+          cJSON_AddNumberToObject(cellobj, "cellType", cp->cell_type);
+          cJSON_AddNumberToObject(cellobj, "cellCmdNr", cp->cell_cmd_nr);
+          cJSON_AddNumberToObject(cellobj, "firstIlvuEndSector", cp->first_ilvu_end_sector);
+          cJSON_AddNumberToObject(cellobj, "lastVobuStartSector", cp->last_vobu_start_sector);
           
           cJSON_AddItemToArray(cells, cellobj);
         }
@@ -269,6 +280,12 @@ char *ifo_parse_disc(const char *path) {
 
       const char *aspect = (vattr->display_aspect_ratio == 3) ? "16:9" : "4:3";
       cJSON_AddStringToObject(video, "aspectRatio", aspect);
+      
+      cJSON_AddBoolToObject(video, "line21CC1", vattr->line21_cc_1);
+      cJSON_AddBoolToObject(video, "line21CC2", vattr->line21_cc_2);
+      cJSON_AddBoolToObject(video, "constantBitrate", vattr->bit_rate);
+      cJSON_AddBoolToObject(video, "letterboxed", vattr->letterboxed);
+      cJSON_AddBoolToObject(video, "filmMode", vattr->film_mode);
     } else {
       cJSON_AddStringToObject(video, "format", "unknown");
       cJSON_AddNumberToObject(video, "width", 0);
@@ -307,6 +324,11 @@ char *ifo_parse_disc(const char *path) {
         cJSON_AddNumberToObject(aobj, "channels", aattr->channels + 1);
         cJSON_AddNumberToObject(aobj, "sampleRate", sample_rate);
         cJSON_AddNumberToObject(aobj, "quantization", quant);
+        cJSON_AddBoolToObject(aobj, "multichannelExtension", aattr->multichannel_extension);
+        cJSON_AddNumberToObject(aobj, "langType", aattr->lang_type);
+        cJSON_AddNumberToObject(aobj, "applicationMode", aattr->application_mode);
+        cJSON_AddNumberToObject(aobj, "langExtension", aattr->lang_extension);
+        cJSON_AddNumberToObject(aobj, "codeExtension", aattr->code_extension);
         cJSON_AddItemToArray(audio_array, aobj);
       }
     }
@@ -327,6 +349,10 @@ char *ifo_parse_disc(const char *path) {
         cJSON_AddStringToObject(sobj, "langCode", lang);
         cJSON_AddStringToObject(sobj, "language", lang);
         cJSON_AddStringToObject(sobj, "format", "VobSub");
+        cJSON_AddNumberToObject(sobj, "codeMode", sattr->code_mode);
+        cJSON_AddNumberToObject(sobj, "subpType", sattr->type);
+        cJSON_AddNumberToObject(sobj, "langExtension", sattr->lang_extension);
+        cJSON_AddNumberToObject(sobj, "codeExtension", sattr->code_extension);
         cJSON_AddItemToArray(sub_array, sobj);
       }
     }

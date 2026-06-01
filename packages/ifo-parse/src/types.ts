@@ -7,6 +7,11 @@ export interface VideoStream {
   height: number
   fps: number             // 25 | 29.97
   aspectRatio: string     // "4:3" | "16:9"
+  line21CC1?: boolean     // closed captioning channel 1
+  line21CC2?: boolean     // closed captioning channel 2
+  constantBitrate?: boolean // true = CBR, false = VBR
+  letterboxed?: boolean   // whether video is letterboxed
+  filmMode?: boolean      // true = film mode, false = video mode
 }
 
 export interface AudioStream {
@@ -18,6 +23,11 @@ export interface AudioStream {
   channels: number        // 2 | 6 | 8
   sampleRate: number      // Hz, typically 48000
   quantization: number    // bits, typically 16 | 20 | 24
+  multichannelExtension?: boolean // whether multichannel extension block exists
+  langType?: number       // 0=unspecified, 1=audio, 2=visual impaired, etc.
+  applicationMode?: number // application-specific mode
+  langExtension?: number  // extended language code
+  codeExtension?: number  // additional coding info
 }
 
 export interface SubtitleStream {
@@ -26,6 +36,10 @@ export interface SubtitleStream {
   langCode: string
   language: string
   format: string          // "VobSub"
+  codeMode?: number       // 0=run-length, 1=extended, 2=other
+  subpType?: number       // 0=not specified, 1=language, 2=other
+  langExtension?: number  // extended language code
+  codeExtension?: number  // additional coding info
 }
 
 export type Stream = VideoStream | AudioStream | SubtitleStream
@@ -44,6 +58,15 @@ export interface Cell {
   blockType: number       // 0=normal, 1=angle block
   seamlessAngle: number   // 1 if angle change is seamless
   stillTime: number       // pause time in seconds (for menus)
+  seamlessPlay?: boolean  // seamless playback flag
+  interleaved?: boolean   // interleaved cell flag
+  stcDiscontinuity?: boolean // system time clock discontinuity
+  playbackMode?: boolean  // still mode after each VOBU
+  restricted?: boolean    // restricted fast-forward
+  cellType?: number       // karaoke cell type (reserved otherwise)
+  cellCmdNr?: number      // cell command number
+  firstIlvuEndSector?: number // first interleaved unit end sector
+  lastVobuStartSector?: number // last VOBU start sector
 }
 
 export interface ProhibitedOps {
@@ -97,6 +120,8 @@ export interface Title {
   pgcIx: number           // PGC index within VTS (0-based)
   ifoTitleType: IFOTitleType
   angleCount: number      // number of angles (usually 1)
+  parentalId: number      // parental management ID for this title
+  nrOfPttSearchPointers: number // number of part-of-title search pointers
   length: number          // seconds (float)
   nextPgc: number         // next PGC number (0 if none)
   prevPgc: number         // previous PGC number (0 if none)

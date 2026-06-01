@@ -218,6 +218,10 @@ describe("classify", () => {
     expect(feature?.ix).toBe(1)
     expect(feature?.length).toBe(11107) // ~3 hours
     
+    // Title-level metadata
+    expect(feature?.parentalId).toBeDefined()
+    expect(feature?.nrOfPttSearchPointers).toBeDefined()
+    
     // Check full metadata on main feature
     expect(feature?.nextPgc).toBe(0)
     expect(feature?.prevPgc).toBe(0)
@@ -231,6 +235,32 @@ describe("classify", () => {
     expect(feature?.prohibitedOps.audioChange).toBe(false)
     expect(feature?.prohibitedOps.subpicChange).toBe(false)
     
+    // Video attributes
+    expect(feature?.video.line21CC1).toBeDefined()
+    expect(feature?.video.line21CC2).toBeDefined()
+    expect(feature?.video.constantBitrate).toBeDefined()
+    expect(feature?.video.letterboxed).toBeDefined()
+    expect(feature?.video.filmMode).toBeDefined()
+    
+    // Audio extensions
+    if (feature?.audio && feature.audio.length > 0) {
+      const audio0 = feature.audio[0]
+      expect(audio0.multichannelExtension).toBeDefined()
+      expect(audio0.langType).toBeDefined()
+      expect(audio0.applicationMode).toBeDefined()
+      expect(audio0.langExtension).toBeDefined()
+      expect(audio0.codeExtension).toBeDefined()
+    }
+    
+    // Subtitle coding mode and type
+    if (feature?.subtitles && feature.subtitles.length > 0) {
+      const sub0 = feature.subtitles[0]
+      expect(sub0.codeMode).toBeDefined()
+      expect(sub0.subpType).toBeDefined()
+      expect(sub0.langExtension).toBeDefined()
+      expect(sub0.codeExtension).toBeDefined()
+    }
+    
     // Cells should exist and have valid data
     expect(feature?.cells).toBeDefined()
     expect(feature?.cells.length).toBeGreaterThan(0)
@@ -239,6 +269,17 @@ describe("classify", () => {
       expect(cell.endSector).toBeGreaterThanOrEqual(cell.startSector)
       expect(cell.blockMode).toBeGreaterThanOrEqual(0)
       expect(cell.blockMode).toBeLessThanOrEqual(3)
+      
+      // New cell flags
+      expect(cell.seamlessPlay).toBeDefined()
+      expect(cell.interleaved).toBeDefined()
+      expect(cell.stcDiscontinuity).toBeDefined()
+      expect(cell.playbackMode).toBeDefined()
+      expect(cell.restricted).toBeDefined()
+      expect(cell.cellType).toBeDefined()
+      expect(cell.cellCmdNr).toBeDefined()
+      expect(cell.firstIlvuEndSector).toBeDefined()
+      expect(cell.lastVobuStartSector).toBeDefined()
     }
   })
 })
