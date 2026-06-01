@@ -91,57 +91,6 @@ char *ifo_parse_disc(const char *path) {
       cJSON_AddItemToArray(parental, cobj);
     }
   }
-  
-  // Text data manager - extract full titles
-  if (vmg->txtdt_mgi && vmg->txtdt_mgi->nr_of_language_units > 0) {
-    cJSON *textData = cJSON_AddObjectToObject(root, "textData");
-    
-    // Disc name from text data (already used above, but include here for completeness)
-    char disc_name[13] = {0};
-    strncpy(disc_name, vmg->txtdt_mgi->disc_name, 12);
-    disc_name[12] = '\0';
-    cJSON_AddStringToObject(textData, "discName", disc_name);
-    
-    // Language units with title strings
-    cJSON *langUnits = cJSON_AddArrayToObject(textData, "languageUnits");
-    for (int lu = 0; lu < vmg->txtdt_mgi->nr_of_language_units; lu++) {
-      txtdt_lu_t *lu_ptr = &vmg->txtdt_mgi->lu[lu];
-      cJSON *luobj = cJSON_CreateObject();
-      
-      char lang[3] = {0};
-      safe_lang(lang, lu_ptr->lang_code);
-      cJSON_AddStringToObject(luobj, "language", lang);
-      cJSON_AddNumberToObject(luobj, "charSet", lu_ptr->char_set);
-      
-      // Extract text strings if available
-      if (lu_ptr->txtdt) {
-        cJSON *texts = cJSON_AddArrayToObject(luobj, "texts");
-        
-        // First offset is disc title, rest are VTS titles
-        int nr_texts = lu_ptr->txtdt->offsets[0]; // number of entries
-        if (nr_texts > 100) nr_texts = 100; // safety limit
-        
-        for (int t = 0; t < nr_texts; t++) {
-          uint16_t offset = lu_ptr->txtdt->offsets[t];
-          if (offset == 0) continue;
-          
-          // The actual text parsing is complex and depends on char_set
-          // For now, just note that text data exists at this offset
-          cJSON *tobj = cJSON_CreateObject();
-          cJSON_AddNumberToObject(tobj, "index", t);
-          cJSON_AddNumberToObject(tobj, "offset", offset);
-          
-          // Try to read raw bytes (may not be valid UTF-8)
-          // Text format varies by charset - skip actual decoding for now
-          cJSON_AddStringToObject(tobj, "note", "Text data present but not decoded");
-          
-          cJSON_AddItemToArray(texts, tobj);
-        }
-      }
-      
-      cJSON_AddItemToArray(langUnits, luobj);
-    }
-  }
 
   tt_srpt_t *tt_srpt = vmg->tt_srpt;
   if (!tt_srpt) {
